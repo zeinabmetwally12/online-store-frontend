@@ -1,22 +1,30 @@
-<!-- app.html -->
-<header style="padding: 1rem 2rem; background: #0f172a; border-bottom: 1px solid #1e293b;">
-  <nav style="display: flex; gap: 1.5rem; align-items: center;">
-    <a routerLink="/products" style="color: #cbd5e1; text-decoration: none;">Products</a>
-    <a routerLink="/cart" style="color: #cbd5e1; text-decoration: none;">Cart</a>
-    <a routerLink="/orders" style="color: #cbd5e1; text-decoration: none;">Orders</a>
-    <a *ngIf="isAdmin" routerLink="/add-product" style="color: #cbd5e1; text-decoration: none;">Add Product</a>
-    
-    <div style="margin-left: auto; display: flex; align-items: center; gap: 1rem;">
-      <!-- Greets with exact account name -->
-      <a *ngIf="currentUser" routerLink="/profile" style="color: #38bdf8; text-decoration: none; font-weight: bold;">
-        Hello, {{ currentUser.name }} 👋
-      </a>
+<nav *ngIf="showNavbar" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: #0f172a; color: #fff; border-bottom: 1px solid #334155;">
+  
+  <div style="display: flex; gap: 2rem; align-items: center;">
+    <!-- Store Brand Logo -->
+    <a routerLink="/products" style="color: #38bdf8; text-decoration: none; font-weight: 800; font-size: 1.4rem; letter-spacing: 0.5px; text-transform: uppercase;">
+      Cartify
+    </a>
 
-      <button (click)="logout()" style="color: #ef4444; background: none; border: none; cursor: pointer;">
-        Logout
-      </button>
+    <!-- Main Navigation Links -->
+    <div style="display: flex; gap: 1.25rem; align-items: center;">
+      <a routerLink="/products" style="color: #cbd5e1; text-decoration: none; font-weight: 500; font-size: 0.95rem;">Products</a>
+      <a routerLink="/cart" style="color: #cbd5e1; text-decoration: none; font-weight: 500; font-size: 0.95rem;">Cart</a>
+      <a routerLink="/orders" style="color: #cbd5e1; text-decoration: none; font-weight: 500; font-size: 0.95rem;">Orders</a>
+      <a *ngIf="isAdmin" routerLink="/add-product" style="color: #f59e0b; text-decoration: none; font-weight: 500; font-size: 0.95rem;">+ Add Product</a>
     </div>
-  </nav>
-</header>
+  </div>
 
+  <!-- Right Section: User Greeting & Logout -->
+  <div style="display: flex; align-items: center; gap: 1.25rem;">
+    <span *ngIf="currentUser" style="color: #f8fafc; font-weight: 600; font-size: 0.95rem;">
+      Hello, {{ currentUser.name }} 👋
+    </span>
+    <button (click)="logout()" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem;">
+      Logout
+    </button>
+  </div>
+</nav>
+
+<!-- Main Page Content -->
 <router-outlet></router-outlet>

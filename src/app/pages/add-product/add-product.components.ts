@@ -57,6 +57,18 @@ import { ProductService } from '../../services/product.service';
           ></textarea>
         </div>
 
+        <!-- Restored Image URL Section -->
+        <div>
+          <label style="display: block; color: #cbd5e1; margin-bottom: 0.5rem; font-weight: 500;">Image URL</label>
+          <input 
+            type="text" 
+            [(ngModel)]="imageUrl" 
+            name="imageUrl" 
+            placeholder="https://images.unsplash.com/photo-..."
+            style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #fff; box-sizing: border-box;"
+          />
+        </div>
+
         <button 
           type="submit" 
           [disabled]="loading"
@@ -72,6 +84,7 @@ export class AddProductComponent {
   name: string = '';
   price: number | null = null;
   description: string = '';
+  imageUrl: string = '';
   
   loading: boolean = false;
   errorMessage: string = '';
@@ -99,7 +112,9 @@ export class AddProductComponent {
       name: this.name,
       title: this.name,
       price: Number(this.price),
-      description: this.description
+      description: this.description,
+      imageUrl: this.imageUrl,
+      image: this.imageUrl // compatibility payload fallback
     };
 
     const addMethod = this.productService.createProduct 

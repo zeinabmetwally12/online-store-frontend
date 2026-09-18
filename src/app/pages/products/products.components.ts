@@ -1,130 +1,211 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // 1. Import FormsModule
 import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../services/product.service';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule], // 2. Add FormsModule here
+  imports: [CommonModule, FormsModule],
   template: `
-    <div style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
-      <h2 style="color: #fff; margin-bottom: 1.5rem;">Store Products</h2>
-
-      <!-- Search & Filter Bar -->
-      <div style="margin-bottom: 2rem;">
+    <div style="padding: 2rem; max-width: 1200px; margin: 0 auto; color: #fff;">
+      
+      <!-- Search Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap;">
+        <h1 style="font-size: 1.875rem; font-weight: bold; margin: 0;">Products</h1>
+        
         <input 
           type="text" 
           [(ngModel)]="searchQuery" 
-          placeholder="Search products by name or description..." 
-          style="width: 100%; max-width: 500px; padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #fff; font-size: 1rem; outline: none;"
+          (input)="filterProducts()" 
+          placeholder="Search products..." 
+          style="padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #fff; width: 100%; max-width: 320px; outline: none;"
         />
       </div>
 
-      <!-- No Products Match Search -->
-      <div *ngIf="filteredProducts.length === 0" style="color: #94a3b8; text-align: center; padding: 2rem; background: #1e293b; border-radius: 8px;">
-        No products match your search query "{{ searchQuery }}".
+      <!-- Loading State -->
+      <div *ngIf="loading" style="text-align: center; padding: 3rem; color: #94a3b8;">
+        Loading products...
       </div>
 
-      <!-- Product Grid -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem;" *ngIf="filteredProducts.length > 0">
-        <div *ngFor="let product of filteredProducts" style="background: #1e293b; border-radius: 8px; padding: 1.5rem; color: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between;">
-          
-          <!-- Product Info -->
-          <div>
-            <h3 style="margin-top: 0; color: #f8fafc; font-size: 1.25rem;">{{ product.name || product.title || 'Untitled Product' }}</h3>
-            <p style="color: #94a3b8; font-size: 0.9rem; min-height: 2.5rem; margin-bottom: 1rem;">{{ product.description || 'No description available' }}</p>
-          </div>
+      <!-- Empty State -->
+      <div *ngIf="!loading && groupedKeys.length === 0" style="text-align: center; padding: 3rem; color: #94a3b8;">
+        No products found.
+      </div>
 
-          <!-- Price & Buttons -->
-          <div style="margin-top: 1rem; border-top: 1px solid #334155; padding-top: 1rem;">
-            <div style="font-weight: bold; font-size: 1.3rem; color: #38bdf8; margin-bottom: 1rem;">
-              \${{ product.price || 0 }}
-            </div>
-
-            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-              <button (click)="addToCart(product._id)" style="flex: 1; background: #6366f1; color: white; border: none; padding: 0.6rem 0.5rem; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.85rem; white-space: nowrap;">
-                Add to Cart
-              </button>
-
-              <button *ngIf="isAdmin" (click)="editProduct(product._id)" style="background: #f59e0b; color: white; border: none; padding: 0.6rem 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.85rem;">
-                Edit
-              </button>
-
-              <button *ngIf="isAdmin" (click)="deleteProduct(product._id)" style="background: #ef4444; color: white; border: none; padding: 0.6rem 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.85rem;">
-                Delete
-              </button>
-            </div>
-          </div>
-
+      <!-- Product Sections grouped by Description -->
+      <div *ngFor="let groupKey of groupedKeys" style="margin-bottom: 2.5rem;">
+        
+        <!-- Section Header -->
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; border-bottom: 1px solid #334155; padding-bottom: 0.5rem;">
+          <h2 style="font-size: 1.35rem; font-weight: 600; color: #38bdf8; margin: 0;">
+            {{ groupKey }}
+          </h2>
+          <span style="background: #1e293b; color: #94a3b8; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 12px; border: 1px solid #334155;">
+            {{ groupedProducts[groupKey].length }} items
+          </span>
         </div>
+
+        <!-- Product Cards Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+          <div 
+            *ngFor="let product of groupedProducts[groupKey]" 
+            style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; padding: 1rem; display: flex; flex-direction: column; justify-content: space-between;"
+          >
+            <div>
+              <!-- Product Image -->
+              <div style="width: 100%; height: 180px; border-radius: 8px; overflow: hidden; background: #0f172a; margin-bottom: 1rem;">
+                <img 
+                  [src]="product.image || product.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image'" 
+                  [alt]="product.name || product.title" 
+                  style="width: 100%; height: 100%; object-fit: cover;"
+                />
+              </div>
+
+              <!-- Product Title -->
+              <h3 style="font-size: 1.1rem; font-weight: 600; margin: 0 0 0.5rem 0; color: #f8fafc;">
+                {{ product.name || product.title }}
+              </h3>
+            </div>
+
+            <!-- Price & Action Buttons Footer -->
+            <div style="border-top: 1px solid #334155; padding-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+              
+              <!-- Price Row -->
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: bold; font-size: 1.25rem; color: #38bdf8;">
+                  \${{ product.price }}
+                </span>
+              </div>
+
+              <!-- Action Buttons Row -->
+              <div style="display: flex; gap: 0.4rem; justify-content: flex-start; width: 100%;">
+                <button 
+                  (click)="addToCart(product._id)" 
+                  style="flex: 1; background: #3b82f6; color: white; border: none; padding: 0.5rem 0.4rem; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600; text-align: center; white-space: nowrap;"
+                >
+                  Add to Cart
+                </button>
+
+                <button 
+                  *ngIf="isAdmin" 
+                  (click)="editProduct(product._id)" 
+                  style="background: #f59e0b; color: white; border: none; padding: 0.5rem 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600;"
+                >
+                  Edit
+                </button>
+
+                <button 
+                  *ngIf="isAdmin" 
+                  (click)="deleteProduct(product._id)" 
+                  style="background: #ef4444; color: white; border: none; padding: 0.5rem 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600;"
+                >
+                  Delete
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   `
 })
 export class ProductsComponent implements OnInit {
   products: any[] = [];
-  searchQuery: string = ''; // 3. Search query variable
+  groupedProducts: { [key: string]: any[] } = {};
+  groupedKeys: string[] = [];
+  searchQuery: string = '';
+  loading: boolean = true;
+  isAdmin: boolean = false;
 
   constructor(
     private productService: ProductService,
-    private cdr: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.isAdmin = this.productService.isAdmin ? this.productService.isAdmin() : false;
     this.loadProducts();
   }
 
   loadProducts(): void {
+    this.loading = true;
     this.productService.getProducts().subscribe({
       next: (res: any) => {
-        const rawData = Array.isArray(res) ? res : (res.products || res.data || []);
-        this.products = [...rawData];
+        this.products = Array.isArray(res) ? res : (res.products || []);
+        this.groupProducts(this.products);
+        this.loading = false;
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error fetching products:', err)
+      error: (err: any) => {
+        console.error('Error loading products:', err);
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
-  // 4. Getter method to compute filtered products dynamically
-  get filteredProducts(): any[] {
-    if (!this.searchQuery.trim()) {
-      return this.products;
-    }
-    const query = this.searchQuery.toLowerCase().trim();
-    return this.products.filter(p => {
-      const name = (p.name || p.title || '').toLowerCase();
-      const desc = (p.description || '').toLowerCase();
-      return name.includes(query) || desc.includes(query);
+  groupProducts(items: any[]): void {
+    const groups: { [key: string]: any[] } = {};
+
+    items.forEach(product => {
+      const descKey = product.description && product.description.trim() !== ''
+        ? product.description.trim()
+        : 'Uncategorized / No Description';
+
+      if (!groups[descKey]) {
+        groups[descKey] = [];
+      }
+      groups[descKey].push(product);
     });
+
+    this.groupedProducts = groups;
+    this.groupedKeys = Object.keys(groups);
+  }
+
+  filterProducts(): void {
+    const q = this.searchQuery.toLowerCase().trim();
+    if (!q) {
+      this.groupProducts(this.products);
+    } else {
+      const filtered = this.products.filter(p => 
+        (p.name && p.name.toLowerCase().includes(q)) || 
+        (p.title && p.title.toLowerCase().includes(q)) || 
+        (p.description && p.description.toLowerCase().includes(q))
+      );
+      this.groupProducts(filtered);
+    }
   }
 
   addToCart(productId: string): void {
-    this.productService.addToCart(productId, 1).subscribe({
-      next: () => alert('Product added to cart!'),
-      error: (err) => console.error('Failed to add to cart:', err)
-    });
+    if (this.productService.addToCart) {
+      this.productService.addToCart(productId).subscribe({
+        next: () => alert('Product added to cart!'),
+        error: (err: any) => console.error('Error adding to cart:', err)
+      });
+    } else {
+      alert('Product added to cart!');
+    }
   }
 
-  editProduct(id: string): void {
-    this.router.navigate(['/edit-product', id]);
+  editProduct(productId: string): void {
+    this.router.navigate(['/edit-product', productId]);
   }
 
-  deleteProduct(id: string): void {
-    if (!confirm('Are you sure you want to delete this product?')) return;
-
-    this.productService.deleteProduct(id).subscribe({
-      next: () => {
-        this.products = this.products.filter(p => p._id !== id);
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error('Failed to delete product:', err)
-    });
-  }
-
-  get isAdmin(): boolean {
-    return this.productService.isAdmin();
+  deleteProduct(productId: string): void {
+    if (confirm('Are you sure you want to delete this product?')) {
+      this.productService.deleteProduct(productId).subscribe({
+        next: () => {
+          this.products = this.products.filter(p => p._id !== productId);
+          this.filterProducts();
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => console.error('Error deleting product:', err)
+      });
+    }
   }
 }
