@@ -1,0 +1,42 @@
+<div class="product-card">
+
+    @if (product().imageUrl) {
+        <img
+            [src]="product().imageUrl"
+            [alt]="product().name"
+            class="product-image"
+        >
+    }
+
+    <div class="product-info">
+
+        <h3>{{ product().name }}</h3>
+
+        <p class="category">
+            {{ product().category }}
+        </p>
+
+        <p class="price">
+            {{ product().price }} EGP
+        </p>
+
+        @if (product().stock > 0) {
+            <p class="stock">
+                In Stock: {{ product().stock }}
+            </p>
+        } @else {
+            <p class="out-of-stock">
+                Out of Stock
+            </p>
+        }
+
+        <button
+            [disabled]="product().stock === 0"
+            (click)="addToCart()"
+        >
+            Add to Cart
+        </button>
+
+    </div>
+
+</div>

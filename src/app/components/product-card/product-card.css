@@ -1,0 +1,47 @@
+.product-card {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 15px;
+    background: white;
+}
+
+.product-image {
+    width: 100%;
+    height: 220px;
+    object-fit: contain;
+}
+
+.product-info {
+    padding-top: 10px;
+}
+
+.product-info h3 {
+    margin-bottom: 8px;
+}
+
+.category {
+    color: #666;
+}
+
+.price {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.stock {
+    color: green;
+}
+
+.out-of-stock {
+    color: red;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
+}
